@@ -1,122 +1,157 @@
-// Predefined items with prices
+// === Items data ===
 const itemsList = [
-  { name: "Paayi", price: 1000 },
-  { name: "Notebook", price: 50 },
-  { name: "Pencil", price: 5 },
-  { name: "Eraser", price: 3 },
-  { name: "Marker", price: 20 }
+  {name:"Pen", price:10},
+  {name:"Notebook", price:50},
+  {name:"Pencil", price:5},
+  {name:"Eraser", price:3},
+  {name:"Marker", price:20},
+  {name:"Scale", price:15}
 ];
 
-// Populate item dropdown
-const itemSelect = document.getElementById("item");
-itemsList.forEach(item => {
-  const option = document.createElement("option");
-  option.value = item.name;
-  option.textContent = `${item.name} (Rs.${item.price})`;
-  itemSelect.appendChild(option);
+// Elements
+const itemSelect = document.getElementById('item');
+const qtyInput = document.getElementById('quantity');
+const tbody = document.querySelector('#invoiceTable tbody');
+const grandEl = document.getElementById('grandTotal');
+const customerInput = document.getElementById('customer');
+
+// Populate dropdown with placeholder
+const placeholder = document.createElement('option');
+placeholder.value = "";
+placeholder.textContent = "Select Item";
+placeholder.disabled = true;
+placeholder.selected = true;
+itemSelect.appendChild(placeholder);
+
+// Add actual items
+itemsList.forEach(it=>{
+  const opt = document.createElement('option');
+  opt.value = it.name;
+  opt.textContent = `${it.name} (Rs.${it.price})`;
+  itemSelect.appendChild(opt);
 });
 
 let invoiceItems = [];
 
-function addItem() {
-  const itemName = itemSelect.value;
-  const quantity = parseInt(document.getElementById("quantity").value);
-  const item = itemsList.find(i => i.name === itemName);
-  
-  if(!item || quantity <= 0) return;
+// Add item
+function addItem(){
+  const name = itemSelect.value;
+  const qty = parseInt(qtyInput.value) || 0;
+  if(!name || qty<=0) {
+    alert("Please select a valid item and quantity.");
+    return;
+  }
 
+  const item = itemsList.find(i=>i.name===name);
   invoiceItems.push({
     name: item.name,
     price: item.price,
-    quantity: quantity,
-    total: item.price * quantity
+    quantity: qty,
+    total: item.price*qty
   });
+  renderInvoice();
+  qtyInput.value = 1;
+  itemSelect.value = ""; // reset dropdown to placeholder
+}
 
+// Remove item
+function removeItem(index){
+  invoiceItems.splice(index,1);
   renderInvoice();
 }
 
-function removeItem(index) {
-  invoiceItems.splice(index, 1);
-  renderInvoice();
+// Clear all
+function clearAll(){
+  if(confirm("Are you sure you want to clear all items and customer name?")){
+    invoiceItems = [];
+    customerInput.value = '';
+    itemSelect.value = "";
+    renderInvoice();
+  }
 }
 
-function renderInvoice() {
-  const tbody = document.querySelector("#invoiceTable tbody");
-  tbody.innerHTML = "";
-  let grandTotal = 0;
-
-  invoiceItems.forEach((item, index) => {
-    const tr = document.createElement("tr");
-    tr.innerHTML = `
-      <td>${item.name}</td>
-      <td>Rs.${item.price}</td>
-      <td>${item.quantity}</td>
-      <td>Rs.${item.total}</td>
-      <td><button onclick="removeItem(${index})">Remove</button></td>
+// Render table
+function renderInvoice(){
+  tbody.innerHTML='';
+  let grand=0;
+  invoiceItems.forEach((it,idx)=>{
+    const tr=document.createElement('tr');
+    tr.innerHTML=`
+      <td>${it.name}</td>
+      <td>Rs.${it.price}</td>
+      <td>${it.quantity}</td>
+      <td>Rs.${it.total}</td>
+      <td><button style="background:#dc3545;color:white;border:none;padding:5px 8px;border-radius:4px;" onclick="removeItem(${idx})">X</button></td>
     `;
     tbody.appendChild(tr);
-    grandTotal += item.total;
+    grand+=it.total;
   });
-
-  document.getElementById("grandTotal").textContent = grandTotal;
+  grandEl.textContent=grand;
 }
 
 // Print invoice
-function printInvoice() {
-  const customerName = document.getElementById("customer").value || "N/A";
-  let grandTotal = document.getElementById("grandTotal").textContent;
+function printInvoice(){
+  if(invoiceItems.length===0){ alert('No items to print'); return; }
+  const customer=customerInput.value || "N/A";
+  const dateStr=new Date().toLocaleDateString();
+  const grand=grandEl.textContent;
 
-  let html = `
+  let html=`
     <html>
     <head>
+      <meta charset="utf-8">
       <title>Invoice</title>
       <style>
-        body { font-family: Arial, sans-serif; padding: 20px; }
-        h1, h2 { text-align: center; }
-        table { border-collapse: collapse; width: 100%; margin-top: 20px; }
-        th, td { border: 1px solid black; padding: 8px; text-align: center; }
-        th { background-color: #f2f2f2; }
-        .total { text-align: right; font-weight: bold; margin-top: 10px; }
+        body{font-family:Arial,sans-serif; padding:20px;}
+        h1{text-align:center; margin-bottom:10px;}
+        .header{display:flex; justify-content:space-between; margin-bottom:10px; flex-wrap:wrap;}
+        table{width:100%; border-collapse:collapse; margin-top:10px;}
+        th,td{border:1px solid black; padding:8px; text-align:center;}
+        th{background:#f2f2f2;}
+        .total{text-align:right; font-weight:bold; font-size:16px; margin-top:10px;}
       </style>
     </head>
     <body>
       <h1>Invoice</h1>
-      <p><strong>Customer Name:</strong> ${customerName}</p>
-      <p><strong>Date:</strong> ${new Date().toLocaleDateString()}</p>
+      <div class="header">
+        <div><strong>Customer:</strong> ${customer}</div>
+        <div><strong>Date:</strong> ${dateStr}</div>
+      </div>
       <table>
         <thead>
           <tr>
             <th>Item</th>
             <th>Price (Rs.)</th>
-            <th>Quantity</th>
+            <th>Qty</th>
             <th>Total (Rs.)</th>
           </tr>
         </thead>
         <tbody>
   `;
-
-  invoiceItems.forEach(item => {
-    html += `
+  invoiceItems.forEach(it=>{
+    html+=`
       <tr>
-        <td>${item.name}</td>
-        <td>Rs.${item.price}</td>
-        <td>${item.quantity}</td>
-        <td>Rs.${item.total}</td>
+        <td>${it.name}</td>
+        <td>Rs.${it.price}</td>
+        <td>${it.quantity}</td>
+        <td>Rs.${it.total}</td>
       </tr>
     `;
   });
-
-  html += `
+  html+=`
         </tbody>
       </table>
-      <p class="total">Grand Total: Rs.${grandTotal}</p>
+      <div class="total">Grand Total: Rs.${grand}</div>
     </body>
     </html>
   `;
 
-  const printWindow = window.open('', '', 'height=600,width=800');
-  printWindow.document.write(html);
-  printWindow.document.close();
-  printWindow.focus();
-  printWindow.print();
+  const w=window.open('','_blank','width=800,height=600');
+  w.document.write(html);
+  w.document.close();
+  w.focus();
+  w.print();
 }
+
+// Initial render
+renderInvoice();
