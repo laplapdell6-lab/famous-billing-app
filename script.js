@@ -1,4 +1,3 @@
-// === Items data ===
 const itemsList = [
   {name:"Pen", price:10},
   {name:"Notebook", price:50},
@@ -8,14 +7,13 @@ const itemsList = [
   {name:"Scale", price:15}
 ];
 
-// Elements
 const itemSelect = document.getElementById('item');
 const qtyInput = document.getElementById('quantity');
 const tbody = document.querySelector('#invoiceTable tbody');
 const grandEl = document.getElementById('grandTotal');
 const customerInput = document.getElementById('customer');
+const transportInput = document.getElementById('transport');
 
-// Populate dropdown with placeholder
 const placeholder = document.createElement('option');
 placeholder.value = "";
 placeholder.textContent = "Select Item";
@@ -23,17 +21,16 @@ placeholder.disabled = true;
 placeholder.selected = true;
 itemSelect.appendChild(placeholder);
 
-// Add actual items
 itemsList.forEach(it=>{
   const opt = document.createElement('option');
   opt.value = it.name;
-  opt.textContent = `${it.name} (Rs.${it.price})`;
+  opt.textContent = `${it.name} (${it.price.toFixed(2)})`;
   itemSelect.appendChild(opt);
 });
 
 let invoiceItems = [];
 
-// Add item
+// Add normal item
 function addItem(){
   const name = itemSelect.value;
   const qty = parseInt(qtyInput.value) || 0;
@@ -51,7 +48,33 @@ function addItem(){
   });
   renderInvoice();
   qtyInput.value = 1;
-  itemSelect.value = ""; // reset dropdown to placeholder
+  itemSelect.value = "";
+}
+
+// Add transport fee (optional)
+function addTransport(){
+  const fee = parseFloat(transportInput.value);
+  if(isNaN(fee) || fee <= 0){
+    transportInput.value = "";
+    renderInvoice();
+    return;
+  }
+
+  const existing = invoiceItems.find(i => i.name === "Transportation");
+  if(existing){
+    existing.total = fee;
+    existing.price = fee;
+    existing.quantity = "-";
+  } else {
+    invoiceItems.push({
+      name: "Transportation",
+      price: fee,
+      quantity: "-",
+      total: fee
+    });
+  }
+  transportInput.value = "";
+  renderInvoice();
 }
 
 // Remove item
@@ -62,15 +85,16 @@ function removeItem(index){
 
 // Clear all
 function clearAll(){
-  if(confirm("Are you sure you want to clear all items and customer name?")){
+  if(confirm("Are you sure you want to clear all items?")){
     invoiceItems = [];
     customerInput.value = '';
     itemSelect.value = "";
+    transportInput.value = "";
     renderInvoice();
   }
 }
 
-// Render table
+// Render
 function renderInvoice(){
   tbody.innerHTML='';
   let grand=0;
@@ -78,18 +102,18 @@ function renderInvoice(){
     const tr=document.createElement('tr');
     tr.innerHTML=`
       <td>${it.name}</td>
-      <td>Rs.${it.price}</td>
+      <td>${it.price.toFixed(2)}</td>
       <td>${it.quantity}</td>
-      <td>Rs.${it.total}</td>
+      <td>${it.total.toFixed(2)}</td>
       <td><button style="background:#dc3545;color:white;border:none;padding:5px 8px;border-radius:4px;" onclick="removeItem(${idx})">X</button></td>
     `;
     tbody.appendChild(tr);
-    grand+=it.total;
+    grand+=Number(it.total);
   });
-  grandEl.textContent=grand;
+  grandEl.textContent=grand.toFixed(2);
 }
 
-// Print invoice
+// Print
 function printInvoice(){
   if(invoiceItems.length===0){ alert('No items to print'); return; }
   const customer=customerInput.value || "N/A";
@@ -121,9 +145,9 @@ function printInvoice(){
         <thead>
           <tr>
             <th>Item</th>
-            <th>Price (Rs.)</th>
+            <th>Price</th>
             <th>Qty</th>
-            <th>Total (Rs.)</th>
+            <th>Total</th>
           </tr>
         </thead>
         <tbody>
@@ -132,16 +156,16 @@ function printInvoice(){
     html+=`
       <tr>
         <td>${it.name}</td>
-        <td>Rs.${it.price}</td>
+        <td>${it.price.toFixed(2)}</td>
         <td>${it.quantity}</td>
-        <td>Rs.${it.total}</td>
+        <td>${it.total.toFixed(2)}</td>
       </tr>
     `;
   });
   html+=`
         </tbody>
       </table>
-      <div class="total">Grand Total: Rs.${grand}</div>
+      <div class="total">Grand Total: ${grand}</div>
     </body>
     </html>
   `;
@@ -153,5 +177,4 @@ function printInvoice(){
   w.print();
 }
 
-// Initial render
 renderInvoice();
