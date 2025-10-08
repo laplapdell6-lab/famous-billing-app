@@ -1,180 +1,136 @@
 const itemsList = [
-  {name:"Pen", price:10},
-  {name:"Notebook", price:50},
-  {name:"Pencil", price:5},
-  {name:"Eraser", price:3},
-  {name:"Marker", price:20},
-  {name:"Scale", price:15}
+  { name: "Pen", price: 10 },
+  {
+    name: "Notebook",
+    variants: [
+      { name: "Small", price: 40 },
+      { name: "Medium", price: 50 },
+      { name: "Large", price: 60 }
+    ]
+  },
+  {
+    name: "Pencil",
+    variants: [
+      { name: "Small", price: 5 },
+      { name: "Medium", price: 8 },
+      { name: "Big", price: 10 }
+    ]
+  },
+  { name: "Eraser", price: 3 },
+  { name: "Marker", price: 20 },
+  { name: "Scale", price: 15 }
 ];
-
-const itemSelect = document.getElementById('item');
-const qtyInput = document.getElementById('quantity');
-const tbody = document.querySelector('#invoiceTable tbody');
-const grandEl = document.getElementById('grandTotal');
-const customerInput = document.getElementById('customer');
-const transportInput = document.getElementById('transport');
-
-const placeholder = document.createElement('option');
-placeholder.value = "";
-placeholder.textContent = "Select Item";
-placeholder.disabled = true;
-placeholder.selected = true;
-itemSelect.appendChild(placeholder);
-
-itemsList.forEach(it=>{
-  const opt = document.createElement('option');
-  opt.value = it.name;
-  opt.textContent = `${it.name} (${it.price.toFixed(2)})`;
-  itemSelect.appendChild(opt);
-});
 
 let invoiceItems = [];
 
-// Add normal item
-function addItem(){
-  const name = itemSelect.value;
-  const qty = parseInt(qtyInput.value) || 0;
-  if(!name || qty<=0) {
-    alert("Please select a valid item and quantity.");
-    return;
-  }
-
-  const item = itemsList.find(i=>i.name===name);
-  invoiceItems.push({
-    name: item.name,
-    price: item.price,
-    quantity: qty,
-    total: item.price*qty
+function populateItemDropdown() {
+  const itemSelect = document.getElementById("itemName");
+  itemSelect.innerHTML = '<option value="">Select Item</option>';
+  itemsList.forEach((item, index) => {
+    const opt = document.createElement("option");
+    opt.value = index;
+    opt.textContent = item.name;
+    itemSelect.appendChild(opt);
   });
-  renderInvoice();
-  qtyInput.value = 1;
-  itemSelect.value = "";
 }
 
-// Add transport fee (optional)
-function addTransport(){
-  const fee = parseFloat(transportInput.value);
-  if(isNaN(fee) || fee <= 0){
-    transportInput.value = "";
-    renderInvoice();
-    return;
-  }
+function handleItemChange() {
+  const itemSelect = document.getElementById("itemName");
+  const selectedItem = itemsList[itemSelect.value];
+  const variantWrapper = document.getElementById("variantWrapper");
 
-  const existing = invoiceItems.find(i => i.name === "Transportation");
-  if(existing){
-    existing.total = fee;
-    existing.price = fee;
-    existing.quantity = "-";
-  } else {
-    invoiceItems.push({
-      name: "Transportation",
-      price: fee,
-      quantity: "-",
-      total: fee
+  variantWrapper.innerHTML = "";
+
+  if (selectedItem && selectedItem.variants) {
+    const variantSelect = document.createElement("select");
+    variantSelect.id = "variantSelect";
+    variantSelect.className = "variant-select";
+    variantSelect.innerHTML = '<option value="">Select Type</option>';
+
+    selectedItem.variants.forEach((v, i) => {
+      const opt = document.createElement("option");
+      opt.value = i;
+      opt.textContent = `${v.name} - ₹${v.price.toFixed(2)}`;
+      variantSelect.appendChild(opt);
     });
-  }
-  transportInput.value = "";
-  renderInvoice();
-}
 
-// Remove item
-function removeItem(index){
-  invoiceItems.splice(index,1);
-  renderInvoice();
-}
-
-// Clear all
-function clearAll(){
-  if(confirm("Are you sure you want to clear all items?")){
-    invoiceItems = [];
-    customerInput.value = '';
-    itemSelect.value = "";
-    transportInput.value = "";
-    renderInvoice();
+    variantWrapper.appendChild(variantSelect);
   }
 }
 
-// Render
-function renderInvoice(){
-  tbody.innerHTML='';
-  let grand=0;
-  invoiceItems.forEach((it,idx)=>{
-    const tr=document.createElement('tr');
-    tr.innerHTML=`
-      <td>${it.name}</td>
-      <td>${it.price.toFixed(2)}</td>
-      <td>${it.quantity}</td>
-      <td>${it.total.toFixed(2)}</td>
-      <td><button style="background:#dc3545;color:white;border:none;padding:5px 8px;border-radius:4px;" onclick="removeItem(${idx})">X</button></td>
-    `;
-    tbody.appendChild(tr);
-    grand+=Number(it.total);
-  });
-  grandEl.textContent=grand.toFixed(2);
+function addItem() {
+  const itemSelect = document.getElementById("itemName");
+  const qty = document.getElementById("quantity").value;
+  const transport = document.getElementById("transport").value || 0;
+
+  if (!itemSelect.value || qty <= 0) {
+    alert("Please select an item and enter quantity.");
+    return;
+  }
+
+  const selectedItem = itemsList[itemSelect.value];
+  let itemName = selectedItem.name;
+  let price = selectedItem.price || 0;
+
+  if (selectedItem.variants) {
+    const variantSelect = document.getElementById("variantSelect");
+    if (!variantSelect || !variantSelect.value) {
+      alert("Please select a type for this item.");
+      return;
+    }
+    const variant = selectedItem.variants[variantSelect.value];
+    itemName += ` (${variant.name})`;
+    price = variant.price;
+  }
+
+  const total = price * qty;
+  invoiceItems.push({ name: itemName, qty, price, total });
+
+  renderTable(transport);
 }
 
-// Print
-function printInvoice(){
-  if(invoiceItems.length===0){ alert('No items to print'); return; }
-  const customer=customerInput.value || "N/A";
-  const dateStr=new Date().toLocaleDateString();
-  const grand=grandEl.textContent;
+function renderTable(transport) {
+  const tableBody = document.getElementById("billTableBody");
+  tableBody.innerHTML = "";
 
-  let html=`
-    <html>
-    <head>
-      <meta charset="utf-8">
-      <title>Invoice</title>
-      <style>
-        body{font-family:Arial,sans-serif; padding:20px;}
-        h1{text-align:center; margin-bottom:10px;}
-        .header{display:flex; justify-content:space-between; margin-bottom:10px; flex-wrap:wrap;}
-        table{width:100%; border-collapse:collapse; margin-top:10px;}
-        th,td{border:1px solid black; padding:8px; text-align:center;}
-        th{background:#f2f2f2;}
-        .total{text-align:right; font-weight:bold; font-size:16px; margin-top:10px;}
-      </style>
-    </head>
-    <body>
-      <h1>Invoice</h1>
-      <div class="header">
-        <div><strong>Customer:</strong> ${customer}</div>
-        <div><strong>Date:</strong> ${dateStr}</div>
-      </div>
-      <table>
-        <thead>
-          <tr>
-            <th>Item</th>
-            <th>Price</th>
-            <th>Qty</th>
-            <th>Total</th>
-          </tr>
-        </thead>
-        <tbody>
-  `;
-  invoiceItems.forEach(it=>{
-    html+=`
-      <tr>
-        <td>${it.name}</td>
-        <td>${it.price.toFixed(2)}</td>
-        <td>${it.quantity}</td>
-        <td>${it.total.toFixed(2)}</td>
-      </tr>
+  let grandTotal = 0;
+
+  invoiceItems.forEach((item, index) => {
+    grandTotal += item.total;
+
+    const row = document.createElement("tr");
+    row.innerHTML = `
+      <td>${index + 1}</td>
+      <td>${item.name}</td>
+      <td>${item.qty}</td>
+      <td>${item.price.toFixed(2)}</td>
+      <td>${item.total.toFixed(2)}</td>
     `;
+    tableBody.appendChild(row);
   });
-  html+=`
-        </tbody>
-      </table>
-      <div class="total">Grand Total: ${grand}</div>
-    </body>
-    </html>
-  `;
 
-  const w=window.open('','_blank','width=800,height=600');
-  w.document.write(html);
-  w.document.close();
-  w.focus();
-  w.print();
+  const transportFee = parseFloat(transport) || 0;
+  grandTotal += transportFee;
+
+  document.getElementById("grandTotal").textContent = grandTotal.toFixed(2);
 }
 
-renderInvoice();
+function clearAll() {
+  invoiceItems = [];
+  document.getElementById("billTableBody").innerHTML = "";
+  document.getElementById("grandTotal").textContent = "0.00";
+  document.getElementById("customerName").value = "";
+  document.getElementById("quantity").value = "";
+  document.getElementById("itemName").value = "";
+  document.getElementById("transport").value = "";
+  document.getElementById("variantWrapper").innerHTML = "";
+}
+
+function printBill() {
+  window.print();
+}
+
+document.addEventListener("DOMContentLoaded", () => {
+  populateItemDropdown();
+  document.getElementById("itemName").addEventListener("change", handleItemChange);
+});
