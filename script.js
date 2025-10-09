@@ -123,7 +123,7 @@ function renderInvoice(){
 
 function printInvoice(){
   if(invoiceItems.length===0){ alert('No items to print'); return; }
-  const sortedItems=[...invoiceItems].sort((a,b)=>b.total-a.total);
+  const sortedItems = [...invoiceItems];
   const customer=customerInput.value||"N/A";
   const dateStr=new Date().toLocaleDateString();
   const grand=grandEl.textContent;
@@ -173,3 +173,4 @@ function printInvoice(){
 }
 
 renderInvoice();
+
