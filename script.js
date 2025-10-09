@@ -173,4 +173,3 @@ function printInvoice(){
 }
 
 renderInvoice();
-
