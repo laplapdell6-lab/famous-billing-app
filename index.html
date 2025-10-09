@@ -19,7 +19,7 @@ body {
   border-radius: 10px;
   box-shadow: 0 2px 6px rgba(0,0,0,0.2);
 }
-h1 { text-align:center; margin-bottom:10px; }
+h1 { text-align:center; margin-bottom:10px; color:#004085; }
 label { display:block; margin-top:10px; font-weight:bold; }
 input, select, button {
   width:100%; padding:10px; margin-top:5px;
@@ -49,7 +49,7 @@ td { font-weight:bold; }
 <body>
 
 <div class="container">
-  <h1>Billing App</h1>
+  <h1>FAMOUS MARRIAGE STORE</h1>
 
   <label for="customer">Customer Name:</label>
   <input type="text" id="customer" placeholder="Enter customer name">
@@ -73,10 +73,10 @@ td { font-weight:bold; }
     <button onclick="clearAll()" style="background:#dc3545">Clear All</button>
   </div>
 
-  <!-- Extra Charges (3 Fields) -->
+  <!-- Extra Charges -->
   <div class="row">
     <div style="flex:2">
-      <label for="extra1">Panthal:</label>
+      <label for="extra1">പന്തൽ:</label>
       <input type="number" id="extra1" min="0" placeholder="Enter Amount Here..">
     </div>
     <div style="flex:1; align-self:end;">
@@ -86,11 +86,22 @@ td { font-weight:bold; }
 
   <div class="row">
     <div style="flex:2">
-      <label for="extra2">Carpet:</label>
+      <label for="extra2">കാർപെറ്റ്:</label>
       <input type="number" id="extra2" min="0" placeholder="Enter Amount Here..">
     </div>
     <div style="flex:1; align-self:end;">
       <button onclick="addExtra2()">Add Amount</button>
+    </div>
+  </div>
+
+  <!-- Uruli ABOVE Ceiling & Decoration -->
+  <div class="row">
+    <div style="flex:2">
+      <label for="uruli">ഉരുളി:</label>
+      <input type="number" id="uruli" min="0" placeholder="Enter Amount Here..">
+    </div>
+    <div style="flex:1; align-self:end;">
+      <button onclick="addUruli()">Add Amount</button>
     </div>
   </div>
 
@@ -101,17 +112,6 @@ td { font-weight:bold; }
     </div>
     <div style="flex:1; align-self:end;">
       <button onclick="addExtra3()">Add Amount</button>
-    </div>
-  </div>
-
-  <!-- Uruli Button -->
-  <div class="row">
-    <div style="flex:2">
-      <label for="uruli">ഉരുളി:</label>
-      <input type="number" id="uruli" min="0" placeholder="Enter Amount Here..">
-    </div>
-    <div style="flex:1; align-self:end;">
-      <button onclick="addUruli()">Add Amount</button>
     </div>
   </div>
 
